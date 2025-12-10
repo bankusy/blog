@@ -1,8 +1,10 @@
-import fs from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import matter from 'gray-matter';
 
-const postsDirectory = path.join(process.cwd(), 'content/posts');
+// Initialize Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface Post {
     slug: string;
@@ -10,65 +12,101 @@ export interface Post {
         title: string;
         description: string;
         published: string;
-        category: string;
+        category?: string;
+        sourceUrl?: string;
         coverImage?: string;
         [key: string]: any;
     };
     content: string;
 }
 
-export function getAllPosts(): Post[] {
-    if (!fs.existsSync(postsDirectory)) {
+export async function getAllPosts(): Promise<Post[]> {
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('Supabase credentials missing');
         return [];
     }
 
-    const postFolders = fs.readdirSync(postsDirectory);
+    const { data: summaries, error } = await supabase
+        .from('news_summaries')
+        .select('*, news(url)');
 
-    const posts = postFolders
-        .filter(folder => !folder.startsWith('.') && fs.statSync(path.join(postsDirectory, folder)).isDirectory())
-        .map((folder) => {
-            try {
-                // Support [folder]/[folder].mdx structure
-                const filePath = path.join(postsDirectory, folder, `${folder}.mdx`);
+    if (error || !summaries) {
+        console.error('Error fetching posts from Supabase:', error);
+        return [];
+    }
 
-                if (!fs.existsSync(filePath)) {
-                    return null;
-                }
+    const posts = summaries.map((summary) => {
+        try {
+            // Frontmatter parsing
+            const { data, content } = matter(summary.blog_content);
 
-                const fileContent = fs.readFileSync(filePath, 'utf8');
-                const { data, content } = matter(fileContent);
-
-                return {
-                    slug: folder,
-                    frontmatter: data as Post['frontmatter'],
-                    content,
-                };
-            } catch (e) {
-                console.error(`Error reading post ${folder}:`, e);
-                return null;
+            // Validating minimal frontmatter
+            if (!data.title) {
+                // Fallback if title missing in frontmatter
+                data.title = "Untitled Post";
             }
-        })
+            if (!data.published) {
+                // Try fetching from joined news if needed, but for now fallback to today
+                // Ideally join query should strictly fetch this, assuming migration was successful.
+            }
+
+            // Inject sourceUrl from joined news table if not present in frontmatter
+            // Note: 'news' property comes from the join query.
+            // Using 'any' cast or interface update would be cleaner, but simple check works.
+            if (!data.sourceUrl && (summary as any).news && (summary as any).news.url) {
+                data.sourceUrl = (summary as any).news.url;
+            }
+
+            return {
+                slug: summary.slug || summary.id, // Prefer slug from DB, fallback to UUID
+                frontmatter: data as Post['frontmatter'],
+                content,
+            };
+        } catch (e) {
+            console.error('Error parsing post content:', e);
+            return null;
+        }
+    })
         .filter((post): post is Post => post !== null)
         .sort((a, b) => {
-            return new Date(b.frontmatter.published).getTime() - new Date(a.frontmatter.published).getTime();
+            const dateA = new Date(a.frontmatter.published);
+            const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+
+            const dateB = new Date(b.frontmatter.published);
+            const timeB = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
+
+            return timeB - timeA;
         });
 
     return posts;
 }
 
-export function getPostBySlug(slug: string): Post | null {
-    try {
-        const filePath = path.join(postsDirectory, slug, `${slug}.mdx`);
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+    if (!supabaseUrl || !supabaseKey) {
+        return null;
+    }
 
-        if (!fs.existsSync(filePath)) {
-            return null;
+    const { data: summary, error } = await supabase
+        .from('news_summaries')
+        .select('*, news(url)')
+        .eq('slug', slug)
+        .single();
+
+    if (error || !summary) {
+        // console.error(`Post not found: ${slug}`, error);
+        return null;
+    }
+
+    try {
+        const { data, content } = matter(summary.blog_content);
+
+        // Inject sourceUrl
+        if (!data.sourceUrl && (summary as any).news && (summary as any).news.url) {
+            data.sourceUrl = (summary as any).news.url;
         }
 
-        const fileContent = fs.readFileSync(filePath, 'utf8');
-        const { data, content } = matter(fileContent);
-
         return {
-            slug,
+            slug: summary.slug || summary.id,
             frontmatter: data as Post['frontmatter'],
             content,
         };
