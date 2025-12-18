@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Post } from '@/lib/posts';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 export default function BlogCard({ post }: { post: Post }) {
     return (
@@ -10,7 +10,9 @@ export default function BlogCard({ post }: { post: Post }) {
                     <span>{post.frontmatter.category}</span>
                     <span>•</span>
                     <time dateTime={post.frontmatter.published}>
-                        {format(new Date(post.frontmatter.published), 'MMMM d, yyyy')}
+                        {isValid(new Date(post.frontmatter.published))
+                            ? format(new Date(post.frontmatter.published), 'MMMM d, yyyy')
+                            : post.frontmatter.published}
                     </time>
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">

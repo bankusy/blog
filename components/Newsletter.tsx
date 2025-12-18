@@ -29,21 +29,21 @@ export default function Newsletter() {
                 </div>
 
                 <h2 className="text-3xl font-bold tracking-tight mb-4 text-[var(--text-primary)]">
-                    뉴스레터 구독하기
+                    Subscribe to our Newsletter
                 </h2>
                 <p className="text-[var(--text-secondary)] mb-8 text-lg leading-relaxed">
-                    최신 금융 기술 트렌드와 개발 이야기를 가장 먼저 받아보세요.<br className="hidden sm:block" />
-                    광고성 메일은 발송하지 않습니다.
+                    Stay ahead with the latest fintech trends and development stories.<br className="hidden sm:block" />
+                    No spam, unsubscribe at any time.
                 </p>
 
                 {status === 'success' ? (
                     <div className="bg-[var(--bg-primary)] border border-[var(--primary-color)] rounded-xl p-6 animate-in fade-in zoom-in duration-300">
                         <div className="flex flex-col items-center gap-3">
                             <CheckCircle2 className="w-10 h-10 text-[var(--primary-color)]" />
-                            <h3 className="text-lg font-bold text-[var(--text-primary)]">구독 신청이 완료되었습니다!</h3>
+                            <h3 className="text-lg font-bold text-[var(--text-primary)]">Subscription Successful!</h3>
                             <p className="text-[var(--text-secondary)]">
-                                뉴스레터 서비스는 현재 준비 중입니다.<br />
-                                준비가 완료되는 대로 입력하신 이메일로 가장 먼저 소식을 전해드리겠습니다.
+                                Our newsletter service is coming soon.<br />
+                                You'll be the first to know when we launch!
                             </p>
                         </div>
                     </div>
@@ -54,7 +54,7 @@ export default function Newsletter() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="이메일 주소를 입력해주세요"
+                                placeholder="Enter your email address"
                                 required
                                 disabled={status === 'loading'}
                                 className="flex-1 px-5 py-3.5 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all disabled:opacity-50"
@@ -67,12 +67,12 @@ export default function Newsletter() {
                                 {status === 'loading' ? (
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
-                                    '구독하기'
+                                    'Subscribe'
                                 )}
                             </button>
                         </div>
                         <p className="mt-4 text-xs text-[var(--text-secondary)]">
-                            구독 시 개인정보 처리방침에 동의하게 됩니다.
+                            By subscribing, you agree to our Privacy Policy.
                         </p>
                     </form>
                 )}
