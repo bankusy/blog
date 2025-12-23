@@ -5,8 +5,10 @@ import Navigation from '@/components/Navigation';
 
 import Newsletter from '@/components/Newsletter';
 
-export default function Home() {
-  const posts = getAllPosts();
+export const revalidate = 3600; // Revalidate every hour
+
+export default async function Home() {
+  const posts = await getAllPosts();
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">

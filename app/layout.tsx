@@ -4,8 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
-  title: "Bankusy | Hacker News & Tech Insights",
-  description: "Curated tech news and analysis from Hacker News and other sources.",
+  title: "Bankusy | News & Tech Insights",
+  description: "Curated tech news and analysis from News and other sources.",
 };
 
 export default function RootLayout({
