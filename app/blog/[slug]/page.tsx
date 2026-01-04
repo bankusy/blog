@@ -2,7 +2,7 @@ import { getPostBySlug, getAllPosts } from '@/lib/posts';
 import Navigation from '@/components/Navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { notFound } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import Link from 'next/link';
 
 // Markdown components logic
@@ -15,8 +15,10 @@ import { extractHeadings } from '@/lib/toc';
 import TableOfContents from '@/components/TableOfContents';
 import Newsletter from '@/components/Newsletter';
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
-    const posts = getAllPosts();
+    const posts = await getAllPosts();
     return posts.map((post) => ({
         slug: post.slug,
     }));
@@ -24,7 +26,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
-    const post = getPostBySlug(slug);
+    const post = await getPostBySlug(slug);
 
     if (!post) {
         return {
@@ -35,12 +37,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: post.frontmatter.title,
         description: post.frontmatter.description,
+        keywords: post.frontmatter.tags,
+        alternates: {
+            canonical: `/blog/${slug}`,
+        },
         openGraph: {
             title: post.frontmatter.title,
             description: post.frontmatter.description,
             type: 'article',
             publishedTime: post.frontmatter.published,
             url: `/blog/${slug}`,
+            tags: post.frontmatter.tags, // OG tags
         },
         twitter: {
             card: 'summary_large_image',
@@ -52,7 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const post = getPostBySlug(slug);
+    const post = await getPostBySlug(slug);
 
     if (!post) {
         notFound();
@@ -71,8 +78,31 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
         },
     };
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.frontmatter.title,
+        description: post.frontmatter.description,
+        datePublished: post.frontmatter.published,
+        dateModified: post.frontmatter.published,
+        author: {
+            '@type': 'Organization',
+            name: 'Bankusy',
+        },
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `https://bankusy.com/blog/${slug}`,
+        },
+        keywords: post.frontmatter.tags?.join(', '),
+        articleSection: post.frontmatter.category,
+    };
+
     return (
         <div className="min-h-screen bg-[var(--bg-primary)]">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <Navigation />
 
             <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -86,7 +116,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                         <header className="mb-14">
                             <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)] mb-6 font-medium uppercase tracking-wide">
                                 <time dateTime={post.frontmatter.published}>
-                                    {format(new Date(post.frontmatter.published), 'MMMM d, yyyy')}
+                                    {isValid(new Date(post.frontmatter.published)) ? format(new Date(post.frontmatter.published), 'MMMM d, yyyy') : post.frontmatter.published}
                                 </time>
                                 <span>•</span>
                                 <span className="text-[var(--text-primary)]">{post.frontmatter.category}</span>
@@ -115,6 +145,25 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                             {/* @ts-ignore - types conflict specifically with rehype plugins sometimes */}
                             <MDXRemote source={post.content} options={options} />
                         </div>
+
+                        {post.frontmatter.sourceUrl && (
+                            <div className="mt-16 pt-8 border-t border-[var(--border-color)] flex items-center justify-between">
+                                <span className="text-sm text-[var(--text-secondary)]">
+                                    This article is curated from external sources.
+                                </span>
+                                <a
+                                    href={post.frontmatter.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-sm font-medium text-[var(--text-primary)] hover:underline"
+                                >
+                                    Read Original Article
+                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                            </div>
+                        )}
                     </article>
                 </main>
 
