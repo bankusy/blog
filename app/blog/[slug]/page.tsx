@@ -145,7 +145,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                             {/* @ts-ignore - types conflict specifically with rehype plugins sometimes */}
                             {(() => {
                                 try {
-                                    return <MDXRemote source={post.content} options={options} />;
+                                    return <MDXRemote source={post.content} options={options as any} />;
                                 } catch (e) {
                                     console.error(`MDX compilation failed for ${slug}:`, e);
                                     return (
