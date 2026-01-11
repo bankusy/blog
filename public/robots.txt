@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemap (if you generate one)
-Sitemap: https://bankusy.com/sitemap.xml
-
