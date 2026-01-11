@@ -144,8 +144,21 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                           ">
                             {/* @ts-ignore - types conflict specifically with rehype plugins sometimes */}
                             {(() => {
+                                // Helper to sanitize content causing MDX errors
+                                const sanitizeContent = (content: string) => {
+                                    // 1. Escape simplified tags often used as placeholders like <SOME_COUNTER>, <T>, <SHIFT>
+                                    // Targets: < Uppercase start >
+                                    let sanitized = content.replace(/<([A-Z][\w-]*)>/g, '&lt;$1&gt;');
+
+                                    // 2. Escape tags causing "Unexpected character =" error like <Type=String> or <T=10>
+                                    // This is a bit aggressive but necessary for current build stability
+                                    sanitized = sanitized.replace(/<([a-zA-Z][\w-]*)=([^>]+)>/g, '&lt;$1=$2&gt;');
+
+                                    return sanitized;
+                                };
+
                                 try {
-                                    return <MDXRemote source={post.content} options={options as any} />;
+                                    return <MDXRemote source={sanitizeContent(post.content)} options={options as any} />;
                                 } catch (e) {
                                     console.error(`MDX compilation failed for ${slug}:`, e);
                                     return (
