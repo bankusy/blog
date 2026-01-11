@@ -68,6 +68,7 @@ export async function getAllPosts(): Promise<Post[]> {
         }
     })
         .filter((post): post is Post => post !== null)
+        .filter(post => post.slug !== 'finding-and-fixing-ghosttys-largest-memory-leak') // TODO: Fix content errors in this post
         .sort((a, b) => {
             const dateA = new Date(a.frontmatter.published);
             const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
