@@ -143,7 +143,21 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                             prose-blockquote:border-l-[var(--text-primary)] prose-blockquote:text-[var(--text-primary)] prose-blockquote:font-medium prose-blockquote:italic
                           ">
                             {/* @ts-ignore - types conflict specifically with rehype plugins sometimes */}
-                            <MDXRemote source={post.content} options={options} />
+                            {(() => {
+                                try {
+                                    return <MDXRemote source={post.content} options={options} />;
+                                } catch (e) {
+                                    console.error(`MDX compilation failed for ${slug}:`, e);
+                                    return (
+                                        <div className="p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-[var(--text-secondary)]">
+                                            <p className="font-bold text-red-600 mb-2">Failed to render content format.</p>
+                                            <div className="whitespace-pre-wrap font-mono text-xs overflow-x-auto">
+                                                {post.content}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                            })()}
                         </div>
 
                         {post.frontmatter.sourceUrl && (
