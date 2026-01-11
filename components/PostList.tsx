@@ -11,7 +11,9 @@ export default function PostList({ posts }: { posts: Post[] }) {
 
     // Extract unique categories from posts
     const categories = useMemo(() => {
-        const cats = posts.map(post => post.frontmatter.category).filter(Boolean);
+        const cats = posts
+            .map(post => post.frontmatter.category)
+            .filter((cat): cat is string => !!cat);
         return ['All', ...Array.from(new Set(cats))];
     }, [posts]);
 
