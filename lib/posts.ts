@@ -63,7 +63,7 @@ export async function getAllPosts(): Promise<Post[]> {
                 content,
             };
         } catch (e) {
-            console.error('Error parsing post content:', e);
+            console.error(`Error parsing post content for slug: ${summary.slug || summary.id}`, e);
             return null;
         }
     })

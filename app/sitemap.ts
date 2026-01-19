@@ -5,12 +5,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const posts = await getAllPosts();
     const baseUrl = 'https://bankusy.com';
 
-    const postUrls = posts.map((post) => ({
-        url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: new Date(post.frontmatter.published),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-    }));
+    const postUrls = posts.map((post) => {
+        let date = new Date(post.frontmatter.published);
+        if (isNaN(date.getTime())) {
+            // console.warn(`Invalid date for post: ${post.slug}, fallback to now`);
+            date = new Date();
+        }
+        return {
+            url: `${baseUrl}/blog/${post.slug}`,
+            lastModified: date,
+            changeFrequency: 'weekly' as const,
+            priority: 0.7,
+        };
+    });
 
     return [
         {
