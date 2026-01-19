@@ -1,26 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
-import Logo from './Logo';
-import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, X } from "lucide-react";
+import Image from "next/image";
+import ThemeHook from "@/hooks/ThemeHook";
 
 export default function Navigation() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Navigation items as per PRD
     const navItems = [
-        { name: 'Home', href: '/' },
+        { name: "Home", href: "/" },
         // { name: 'Blog', href: '/' }, // Redundant while Blog is Home
-        { name: 'About', href: '#' },
-        { name: 'Contact', href: '#' },
+        { name: "About", href: "#" },
+        { name: "Contact", href: "#" },
     ];
 
+    const { systemTheme } = ThemeHook();
     return (
         <nav className="w-full border-b border-[var(--border-color)] bg-[var(--bg-primary)] sticky top-0 z-50 transition-colors duration-200">
             <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-                <Link href="/" className="text-xl font-bold tracking-tighter hover:opacity-70 transition-opacity text-[var(--text-primary)]">
-                    <Logo className="w-[100px] h-auto md:w-[120px]" />
+                <Link
+                    href="/"
+                    className="text-xl font-bold tracking-tighter hover:opacity-70 transition-opacity text-[var(--text-primary)]"
+                >
+                    <Image
+                    className="w-[20%]"
+                        src={`/logo-${systemTheme}.svg`}
+                        width={100}
+                        height={100}
+                        alt="logo"
+                    />
                 </Link>
 
                 {/* Desktop Menu */}
@@ -64,5 +75,5 @@ export default function Navigation() {
                 </div>
             )}
         </nav>
-    )
+    );
 }
